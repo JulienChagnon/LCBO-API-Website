@@ -1,5 +1,6 @@
 window.APP_CONFIG = {
   LCBO_API_BASE: '/api',
+  LCBO_FORCE_GRAPHQL: false,
   REQUEST_TIMEOUT_MS: 45000, // Increased to 45s to allow full store scans
   STORE_POSTAL_PARAM: 'postal_code',
   LCBO_GRAPHQL_ENDPOINT: 'https://api.lcbo.dev/graphql',

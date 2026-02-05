@@ -1,5 +1,6 @@
 const DEFAULT_CONFIG = {
   apiBase: '/api',
+  forceGraphql: false,
   requestTimeoutMs: 45000,
   perPage: 50,
   resultsLimit: 18,
@@ -24,6 +25,9 @@ const DEFAULT_CONFIG = {
 
 const CONFIG = {
   apiBase: (window.APP_CONFIG && window.APP_CONFIG.LCBO_API_BASE) || DEFAULT_CONFIG.apiBase,
+  forceGraphql:
+    (window.APP_CONFIG && window.APP_CONFIG.LCBO_FORCE_GRAPHQL) ||
+    DEFAULT_CONFIG.forceGraphql,
   requestTimeoutMs:
     (window.APP_CONFIG && window.APP_CONFIG.REQUEST_TIMEOUT_MS) || DEFAULT_CONFIG.requestTimeoutMs,
   perPage: Number.isFinite(Number(window.APP_CONFIG && window.APP_CONFIG.PER_PAGE))
@@ -55,6 +59,13 @@ const CONFIG = {
     ? Number(window.APP_CONFIG && window.APP_CONFIG.MEDIA_MAX_SIZE)
     : DEFAULT_CONFIG.mediaMaxSize
 };
+
+const IS_GH_PAGES =
+  typeof location !== 'undefined' && /github\.io$/i.test(location.hostname || '');
+const HAS_ABSOLUTE_API_BASE =
+  typeof CONFIG.apiBase === 'string' && /^https?:\/\//i.test(CONFIG.apiBase);
+const GRAPHQL_ONLY =
+  !!CONFIG.forceGraphql || !CONFIG.apiBase || (IS_GH_PAGES && !HAS_ABSOLUTE_API_BASE);
 
 const PRICE_RANGE = {
   min: 10,
@@ -2042,57 +2053,83 @@ async function fetchAllProducts(storeId, preferAbv = true, options = {}) {
   if (isFilteredTypes) {
     params.set('types', typesParam);
   }
-  if (preferAbv) {
-    params.set('abv', '1');
-  }
+    if (preferAbv) {
+      params.set('abv', '1');
+    }
 
-  let products = [];
+    let products = [];
 
-  if (storeId) {
-    const storeUrl = makeUrl(`/stores/${storeId}/products?${params.toString()}`);
-    const storeData = await fetchJson(storeUrl);
-    products = extractProducts(storeData);
-    if (!products.length && state.apiFailed) {
+    if (GRAPHQL_ONLY) {
       try {
-        let fallback = [];
-        if (preferAbv) {
-          try {
-            fallback = await fetchStoreTopValueProductsByGraphql(storeId, '', preferAbv, limit);
-          } catch {
-            fallback = [];
+        if (storeId) {
+          let fallback = [];
+          if (preferAbv) {
+            try {
+              fallback = await fetchStoreTopValueProductsByGraphql(storeId, '', preferAbv, limit);
+            } catch {
+              fallback = [];
+            }
           }
+          if (!fallback.length) {
+            fallback = await fetchStoreProductsByGraphql(storeId, '', preferAbv, limit);
+          }
+          products = fallback;
+        } else {
+          products = await fetchProductsByGraphql('', preferAbv, limit);
         }
-        if (!fallback.length) {
-          fallback = await fetchStoreProductsByGraphql(storeId, '', preferAbv, limit);
-        }
-        if (fallback.length) {
+        if (products.length) {
           state.apiFailed = false;
           state.apiError = '';
-          products = fallback;
         }
       } catch (error) {
         state.apiFailed = true;
         state.apiError = error && error.message ? error.message : 'GraphQL error';
       }
-    }
-  } else {
-    const generalUrl = makeUrl(`/products?${params.toString()}`);
-    const data = await fetchJson(generalUrl);
-    products = extractProducts(data);
-    if (!products.length && state.apiFailed) {
-      try {
-        const fallback = await fetchProductsByGraphql('', preferAbv, limit);
-        if (fallback.length) {
-          state.apiFailed = false;
-          state.apiError = '';
-          products = fallback;
+    } else if (storeId) {
+      const storeUrl = makeUrl(`/stores/${storeId}/products?${params.toString()}`);
+      const storeData = await fetchJson(storeUrl);
+      products = extractProducts(storeData);
+      if (!products.length && state.apiFailed) {
+        try {
+          let fallback = [];
+          if (preferAbv) {
+            try {
+              fallback = await fetchStoreTopValueProductsByGraphql(storeId, '', preferAbv, limit);
+            } catch {
+              fallback = [];
+            }
+          }
+          if (!fallback.length) {
+            fallback = await fetchStoreProductsByGraphql(storeId, '', preferAbv, limit);
+          }
+          if (fallback.length) {
+            state.apiFailed = false;
+            state.apiError = '';
+            products = fallback;
+          }
+        } catch (error) {
+          state.apiFailed = true;
+          state.apiError = error && error.message ? error.message : 'GraphQL error';
         }
-      } catch (error) {
-        state.apiFailed = true;
-        state.apiError = error && error.message ? error.message : 'GraphQL error';
+      }
+    } else {
+      const generalUrl = makeUrl(`/products?${params.toString()}`);
+      const data = await fetchJson(generalUrl);
+      products = extractProducts(data);
+      if (!products.length && state.apiFailed) {
+        try {
+          const fallback = await fetchProductsByGraphql('', preferAbv, limit);
+          if (fallback.length) {
+            state.apiFailed = false;
+            state.apiError = '';
+            products = fallback;
+          }
+        } catch (error) {
+          state.apiFailed = true;
+          state.apiError = error && error.message ? error.message : 'GraphQL error';
+        }
       }
     }
-  }
 
   if (!products.length) {
     products = fallbackAllProducts();
@@ -2214,6 +2251,25 @@ async function fetchStoresByQuery(query, options = {}) {
   }
 
   for (const candidate of variants) {
+    if (tokenGuard && !tokenGuard()) return [];
+    if (GRAPHQL_ONLY) {
+      try {
+        const fallback = await fetchStoresByGraphql(candidate, 4);
+        if (tokenGuard && !tokenGuard()) return [];
+        if (fallback.length) {
+          state.apiFailed = false;
+          state.apiError = '';
+          return fallback;
+        }
+      } catch (error) {
+        if (!tokenGuard || tokenGuard()) {
+          state.apiFailed = true;
+          state.apiError = error && error.message ? error.message : 'GraphQL error';
+        }
+        return [];
+      }
+      continue;
+    }
     const params = new URLSearchParams({
       [CONFIG.storePostalParam]: candidate,
       per_page: '4'
