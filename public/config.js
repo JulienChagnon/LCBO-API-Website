@@ -1,5 +1,7 @@
 window.APP_CONFIG = {
-  LCBO_API_BASE: '/api',
+  // GitHub Pages can't call https://api.lcbo.dev/graphql directly due to CORS.
+  // Use the Netlify `/api` proxy function instead.
+  LCBO_API_BASE: 'https://get-sloshed.netlify.app/api',
   LCBO_FORCE_GRAPHQL: false,
   REQUEST_TIMEOUT_MS: 45000, // Increased to 45s to allow full store scans
   STORE_POSTAL_PARAM: 'postal_code',

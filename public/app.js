@@ -2609,19 +2609,13 @@ async function geocodePostalClient(postalRaw) {
   const normalized = extracted.replace(/[^A-Z0-9]/g, '').trim();
   if (!normalized) return null;
 
-  const candidates = [];
-  if (/^[A-Z]\d[A-Z]\d[A-Z]\d$/.test(normalized)) {
-    candidates.push(normalized);
-    candidates.push(`${normalized.slice(0, 3)} ${normalized.slice(3)}`);
-  }
-  if (normalized.length >= 3 && /^[A-Z]\d[A-Z]/.test(normalized.slice(0, 3))) {
-    const fsa = normalized.slice(0, 3);
-    if (!candidates.includes(fsa)) candidates.push(fsa);
-  }
-  if (!candidates.includes(extracted)) candidates.push(extracted);
+  const fsa =
+    normalized.length >= 3 && /^[A-Z]\d[A-Z]/.test(normalized.slice(0, 3))
+      ? normalized.slice(0, 3)
+      : '';
 
-  for (const candidate of candidates) {
-    const token = encodeURIComponent(String(candidate).trim().toLowerCase());
+  if (fsa) {
+    const token = encodeURIComponent(String(fsa).trim().toLowerCase());
     const data = await fetchExternalJson(`https://api.zippopotam.us/ca/${token}`);
     const place = data && Array.isArray(data.places) ? data.places[0] : null;
     const latitude = place ? Number(place.latitude) : NaN;
@@ -2630,6 +2624,14 @@ async function geocodePostalClient(postalRaw) {
       return { latitude, longitude };
     }
   }
+
+  const candidates = [];
+  if (/^[A-Z]\d[A-Z]\d[A-Z]\d$/.test(normalized)) {
+    candidates.push(normalized);
+    candidates.push(`${normalized.slice(0, 3)} ${normalized.slice(3)}`);
+  }
+  if (fsa && !candidates.includes(fsa)) candidates.push(fsa);
+  if (!candidates.includes(extracted)) candidates.push(extracted);
 
   // Browser-safe fallback: Open-Meteo's geocoding API tends to allow CORS,
   // unlike many free geocoders.

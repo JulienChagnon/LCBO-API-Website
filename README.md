@@ -34,6 +34,20 @@ LCBO_API_MODE=proxy LCBO_API_BASE=http://localhost:3000 node server.js
 
 The UI reads its base URL from `public/config.js` as `LCBO_API_BASE` (default `/api`).
 
+**Deploying (GitHub Pages)**
+
+GitHub Pages is static, so the browser cannot call `https://api.lcbo.dev/graphql` directly due to CORS. For production you need a hosted API (running `server.js`) and point the UI at it:
+
+```
+LCBO_API_BASE: 'https://your-api-host.example.com/api'
+```
+
+`server.js` now sets permissive CORS for `/api` by default. You can tighten it with:
+
+```
+CORS_ALLOW_ORIGIN=https://julienchagnon.github.io node server.js
+```
+
 **API Contract**
 
 The frontend expects these endpoints under `LCBO_API_BASE`:

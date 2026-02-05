@@ -133,6 +133,18 @@ function sendJson(res, statusCode, payload) {
   res.end(body);
 }
 
+function applyCorsHeaders(req, res) {
+  const allowOrigin = process.env.CORS_ALLOW_ORIGIN || '*';
+  if (allowOrigin === 'echo') {
+    res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.setHeader('Vary', 'Origin');
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', allowOrigin);
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+
 function readRequestBody(req) {
   return new Promise((resolve, reject) => {
     const chunks = [];
@@ -706,6 +718,12 @@ const server = http.createServer((req, res) => {
     return;
   }
   if (requestPath.startsWith(apiPrefix)) {
+    applyCorsHeaders(req, res);
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
     if (apiMode === 'proxy') {
       proxyApi(req, res);
     } else {
