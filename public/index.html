@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Get_Sloshed - LCBO Pairings</title>
+    <title>Get_Sloshed - LCBO Top Alcohol Value</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -14,91 +14,115 @@
     <script src="./config.js"></script>
   </head>
   <body>
-    <div class="ambient">
-      <span class="blob blob-a"></span>
-      <span class="blob blob-b"></span>
-      <span class="blob blob-c"></span>
-      <span class="grain"></span>
-    </div>
+    <canvas id="media-canvas" aria-hidden="true"></canvas>
 
     <main class="shell">
       <header class="hero">
-        <p class="eyebrow">Get_Sloshed</p>
-        <h1>Turn any mixer into a smart LCBO pairing</h1>
+        <h1>Highest alcohol value at your LCBO</h1>
         <p class="sub">
-          Tell us what you already have, and we will hunt for cheap, interesting bottles that are
-          in stock near you.
+          Rank in-stock bottles by
+          <span class="formula">
+            <span class="fraction">
+              <span class="top">ABV% * mL</span>
+              <span class="bottom">$</span>
+            </span>
+          </span>.
         </p>
       </header>
 
       <section class="panel">
-        <form id="pairing-form" class="form">
-          <div class="field">
-            <label for="mixer">Mixer you already have</label>
-            <input id="mixer" name="mixer" placeholder="coke, sprite, orange juice" list="mixer-options" />
-            <datalist id="mixer-options">
-              <option value="Coke"></option>
-              <option value="Sprite"></option>
-              <option value="Orange juice"></option>
-              <option value="Ginger ale"></option>
-              <option value="Tonic water"></option>
-              <option value="Cranberry juice"></option>
-              <option value="Pineapple juice"></option>
-              <option value="Lemonade"></option>
-              <option value="Iced tea"></option>
-            </datalist>
-          </div>
+        <form id="pairing-form" class="form" data-media-blocker>
+          <div class="form-split">
+            <section class="form-panel store-panel">
+              <h3>Find a store</h3>
+              <div class="field">
+                <label for="postal">Postal code or Store address</label>
+                <div class="field-row">
+                  <input id="postal" name="postal" placeholder="M5V 2T6 or 10 Dundas St W" />
+                  <button id="find-stores" class="ghost" type="button">Find stores</button>
+                </div>
+                <div id="store-picker" class="store-picker hidden">
+                  <div id="store-options" class="store-options" role="radiogroup" aria-label="Nearby stores"></div>
+                </div>
+              </div>
+            </section>
 
-          <div class="field">
-            <label for="postal">Postal code (optional)</label>
-            <input id="postal" name="postal" placeholder="M5V 2T6" />
-            <button id="find-stores" class="ghost" type="button">Find nearby stores</button>
-          </div>
+            <section class="form-panel filters-panel">
+              <h3>Optional filter</h3>
+              <div class="field">
+                <label>Drink types</label>
+                <div class="filter-actions">
+                  <button id="select-all-types" class="ghost" type="button">Select All</button>
+                  <span class="divider">|</span>
+                  <button id="unselect-all-types" class="ghost" type="button">Unselect All</button>
+                </div>
+                <div class="type-grid">
+                  <label class="check chip">
+                    <input type="checkbox" name="drinkType" value="beer" checked />
+                    <span>Beer</span>
+                  </label>
+                  <label class="check chip">
+                    <input type="checkbox" name="drinkType" value="wine" checked />
+                    <span>Wine</span>
+                  </label>
+                  <label class="check chip">
+                    <input type="checkbox" name="drinkType" value="vodka" checked />
+                    <span>Vodka</span>
+                  </label>
+                  <label class="check chip">
+                    <input type="checkbox" name="drinkType" value="gin" checked />
+                    <span>Gin</span>
+                  </label>
+                  <label class="check chip">
+                    <input type="checkbox" name="drinkType" value="rum" checked />
+                    <span>Rum</span>
+                  </label>
+                  <label class="check chip">
+                    <input type="checkbox" name="drinkType" value="whiskey" checked />
+                    <span>Whiskey</span>
+                  </label>
+                  <label class="check chip">
+                    <input type="checkbox" name="drinkType" value="tequila" checked />
+                    <span>Tequila</span>
+                  </label>
+                  <label class="check chip">
+                    <input type="checkbox" name="drinkType" value="seltzer" checked />
+                    <span>Seltzer</span>
+                  </label>
+                  <label class="check chip">
+                    <input type="checkbox" name="drinkType" value="rtd" checked />
+                    <span>Coolers</span>
+                  </label>
+                </div>
+              </div>
 
-          <div class="field">
-            <label for="store">LCBO store ID (optional)</label>
-            <input id="store" name="store" placeholder="321" />
-            <p class="hint">If you know a specific store, enter its ID to filter inventory.</p>
-          </div>
-
-          <div class="field">
-            <label for="maxPrice">Max price per bottle (CAD)</label>
-            <div class="range-wrap">
-              <input id="maxPrice" name="maxPrice" type="range" min="15" max="60" step="1" value="30" />
-              <span id="maxPriceValue">$30</span>
+              <div class="field">
+                <label for="minPrice">Price range per item (CAD)</label>
+                <div class="range-dual" id="priceRange">
+                  <div class="range-track"></div>
+                  <div class="range-fill"></div>
+                  <input id="minPrice" name="minPrice" type="range" min="10" max="80" step="1" value="15" />
+                  <input id="maxPrice" name="maxPrice" type="range" min="10" max="80" step="1" value="60" />
+                </div>
+                <div class="range-values">
+                  <span id="minPriceValue">$15</span>
+                  <span id="maxPriceValue">$60</span>
+                </div>
+              </div>
+            </section>
+            <div class="actions form-actions">
+              <button class="primary" type="submit">Search</button>
             </div>
           </div>
-
-          <div class="actions">
-            <button class="primary" type="submit">Find pairings</button>
-            <button id="reset" class="ghost" type="button">Reset</button>
-          </div>
         </form>
-
-        <aside class="side">
-          <div class="side-card">
-            <h2>How it works</h2>
-            <p>
-              We look up LCBO products that match your mixer, then rank affordable spirits and
-              modifiers that make the drink feel intentional.
-            </p>
-            <ul>
-              <li>Cheapest bottle first</li>
-              <li>Only in stock items</li>
-              <li>Bonus points for unexpected twists</li>
-            </ul>
-          </div>
-          <div id="store-results" class="side-card hidden">
-            <h3>Nearby stores</h3>
-            <div id="stores-list" class="stores"></div>
-          </div>
-        </aside>
       </section>
 
-      <section class="results">
+      <section class="results" data-media-blocker>
         <div class="results-header">
-          <h2>Pairings</h2>
-          <p id="results-meta">Ready when you are.</p>
+          <h2 id="results-title">Top alcohol value at LCBO</h2>
+          <div id="results-meta" class="results-meta">
+            <span id="results-meta-text" class="results-meta-text">Ready when you are.</span>
+          </div>
         </div>
         <div id="status" class="status"></div>
         <div id="pairings" class="cards"></div>

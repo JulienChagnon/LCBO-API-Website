@@ -1,0 +1,310 @@
+{
+  "provisions" : {
+    "skipInvitationOptimization" : null,
+    "21dcr1_mpc3281_alignWCAGLogoMarkup" : true,
+    "reusableResourcesLibrary" : true,
+    "formTemplatesWCAG" : true,
+    "formSpacing" : true,
+    "24dcr1_MPC7724_enableFormv2andInviteCSSDelay" : null,
+    "20dcr4_MPC2952_enable_exemptFormsFromQuarantine" : true,
+    "21dcr1_MPC3199_AdditionalButtonStyles" : true,
+    "sharePropertyBetweenSubdomains" : null,
+    "24dcr4_MPC8375_enableFeedbackPayloadOptimization" : null,
+    "23dcr2_MPC6711_enableWCAGerrorMessagesPreQuestions" : null,
+    "21dcr6_MPC4296_enable_UBTIdentifierHash" : null,
+    "responsiveRatingComponent" : true,
+    "23dcr1_MPC6711_enableWCAGPrependSurvey" : null,
+    "25dcr2_MPC9116_enableInviteWCAGReflow" : true,
+    "customCssUpload" : null,
+    "25dcr4_mpc9290_WCAGNavFix" : null,
+    "20dcr4_MPC2893_enable_ScreenCaptureAsComponent" : null,
+    "dynamicModalSizeInCustomHtml" : true,
+    "adobeAnalyticsObjectName" : null,
+    "23dcr2_mpc36711_enableFormWCAGReflow" : true,
+    "mobileWebDynamicFormSize" : true,
+    "23dcr5_MPC7505_enableDescriptiveRequiredText" : true,
+    "21DCR5_MPC4030_EnableFixForSpaTimeOnPage" : true,
+    "21dcr1_MPC3370_EnableGreaterSmallerThanSupport" : null,
+    "25dcr1_MPC8593_disableExtraFeedbackSubmitEvent" : true,
+    "24dcr4_MPC8160_enableMultipleSubmitFix" : true,
+    "24dcr1_MPC7514_enableSPAOverflowFix" : true,
+    "adobeConcatLinkTrackVars" : null,
+    "25dcr2_MPC8565_enableDynamicFeedbackButtonSize" : null,
+    "doNotSurveyOnUBTNetworkFail" : null,
+    "23dcr4_MPC7186_enableInvitationSpinnerFix" : null,
+    "mobileInvitationLayout" : true,
+    "21dcr2_MPC3571_enable_ClearEmbeddedFormOnUpdatePageView" : true,
+    "adobeIncludeLinkTrackVars" : null,
+    "21dcr3_mpc3662_delaySurveyUntilCSSLoad" : null,
+    "mobileWebDynamicFormSizeInFormBuilder" : null,
+    "20dcr32_NM11146_PreventIFrameScrollFlickering" : true,
+    "cooladataCreateSessionEvent" : null,
+    "21DCR1_MPC3199_enable_RatingLabelAlign" : true,
+    "25dcr2_MPC9116_disableUserPercentileAtCreateSession" : null,
+    "24dcr2_MPC7960_enableViewportLogicFix" : true,
+    "25dcr4_mpc9290_WCAGScaleFix" : null
+  },
+  "sbtServerDomain" : "https://ubt-lb.digital-cloud.medallia.ca",
+  "sbtEnvPrefix" : "wdccan_",
+  "endUserIdentifier" : { },
+  "formNodes" : [ {
+    "formId" : "3858",
+    "isCustomHtmlEnabled" : "false",
+    "urlVersion" : "V2",
+    "formHtmlUrl" : "https://resources.digital-cloud.medallia.ca/md-form/website/1.23.0/index.html",
+    "formDataUrl" : "https://resources.digital-cloud.medallia.ca/wdccan/752/forms/3858/formDataV2_1762327698006_###LANGUAGE_CODE###.json",
+    "formWidth" : "450",
+    "formHeight" : "450",
+    "isFixedSize" : "false",
+    "isFullWidthEmbedded" : "null",
+    "designSettings" : {
+      "formBackgroundColor" : "",
+      "thankYouPageBackgroundColor" : ""
+    },
+    "formLocalizationSettings" : {
+      "defaultLanguage" : "en",
+      "useCustomParam" : "true",
+      "customParam" : "1130"
+    },
+    "formJsonRelativePath" : "wdccan/752/forms/3858/formData1762327698006_###LANGUAGE_CODE###.json",
+    "formJsonV2RelativePath" : "wdccan/752/forms/3858/formDataV2_1762327698006_###LANGUAGE_CODE###.json",
+    "inviteJsonRelativePath" : "wdccan/752/forms/3858/invitationData1762327765807_###LANGUAGE_CODE###.json",
+    "availableLanguages" : [ "en", "fr" ],
+    "triggerAvailableLanguages" : [ "en", "fr" ],
+    "functionFileUrl" : "",
+    "customParams" : [ 1217, 1131, 1130, 44, 28 ],
+    "formType" : "invitation",
+    "formDisplay" : {
+      "displayType" : "lightbox",
+      "displayDirection" : "centerRight",
+      "isSelfHosted" : "",
+      "selfHostedUrl" : ""
+    },
+    "inviteData" : {
+      "inviteUrl" : "https://resources.digital-cloud.medallia.ca/wdccan/752/forms/3858/invitation1762327765765.html",
+      "inviteHeight" : "400",
+      "inviteWidth" : "700",
+      "skipInvitation" : "true",
+      "invitationPosition" : "top",
+      "inviteDataUrl" : "https://resources.digital-cloud.medallia.ca/wdccan/752/forms/3858/invitationData1762327765807_###LANGUAGE_CODE###.json"
+    },
+    "onSiteData" : {
+      "genericRule" : "{\"type\":\"criteriaGroup\",\"conjunction\":\"OR\",\"childrenCriterias\":[{\"type\":\"criteria\",\"value\":\"https://www.lcbo.com/fr/\",\"formId\":3858,\"fieldId\":1217,\"formName\":\"General Intercept - Revamp\",\"uniqueId\":\"customParam1217\",\"condition\":\"doesNotEqual\",\"fieldName\":\"location.href\",\"fieldType\":\"Text\",\"fieldOrigin\":\"customParam\"},{\"type\":\"criteria\",\"value\":\"https://www.lcbo.com/en/\",\"formId\":3858,\"fieldId\":1217,\"formName\":\"General Intercept - Revamp\",\"uniqueId\":\"customParam1217\",\"condition\":\"doesNotEqual\",\"fieldName\":\"location.href\",\"fieldType\":\"Text\",\"fieldOrigin\":\"customParam\"}]}",
+      "kampyleInvitePerSession" : {
+        "inviteOncePerSession" : "false"
+      },
+      "kampyleInvitePercentageUsers" : {
+        "prec" : "5.0"
+      },
+      "devicetypes" : [ "desktop", "mobile", "tablet" ],
+      "kampyleTimeInSession" : {
+        "time" : "139"
+      },
+      "declined" : {
+        "days" : "90"
+      },
+      "submitted" : {
+        "days" : "90"
+      }
+    },
+    "urlRules" : {
+      "exclusionUrl" : {
+        "rule" : "https://www.lcbo.com/en/checkout;https://www.lcbo.com/fr/checkout;https://mcstaging.lcbo.com/en/;https://mcstaging2.lcbo.com/en/;https://mcstaging3.lcbo.com/en/;https://mcstaging4.lcbo.com/en/;https://lx227.lcbo.com;https://pstg-wc.lcbo.com;https://qastg-wc.lcbo.com;https://qa.lcbo.com;https://qalive-wc.lcbo.com;/webapp/wcs/stores/servlet/AjaxOrderItemDisplayView;/webapp/wcs/stores/servlet/OrderShippingBillingView;/webapp/wcs/stores/servlet/SingleShipmentOrderSummaryView;/webapp/wcs/stores/servlet/OrderShippingBillingConfirmationView;/content/lcbo/en/homepage/covid-19-lcbo-response.html;https://www.lcbo.com/en/corporate-gifting?icid=megamenu_corp-gifting_p9_hmpg_w1_en;https://www.lcbo.com/en/corporate-gifting;https://www.lcbo.com/fr/corporate-gifting;https://www.lcbo.com/fr/checkout;https://mcstaging.lcbo.com/fr/;https://mcstaging2.lcbo.com/fr/;https://mcstaging3.lcbo.com/fr/;https://mcstaging4.lcbo.com/fr/;https://lx227.lcbo.com;https://pstg-wc.lcbo.com;https://qastg-wc.lcbo.com;https://qa.lcbo.com;https://qalive-wc.lcbo.com;/webapp/wcs/stores/servlet/AjaxOrderItemDisplayView;/webapp/wcs/stores/servlet/OrderShippingBillingView;/webapp/wcs/stores/servlet/SingleShipmentOrderSummaryView;/webapp/wcs/stores/servlet/OrderShippingBillingConfirmationView;/content/lcbo/fr/homepage/covid-19-lcbo-response.html;https://www.lcbo.com/en/corporate-gifting;https://www.lcbo.com/fr/corporate-gifting;https://www.lcbo.com/en/checkout/onepage/success;https://www.lcbo.com/fr/checkout/onepage/success"
+      },
+      "inclusionUrl" : {
+        "rule" : "https://www.lcbo.com/en/;https://www.lcbo.com/content/lcbo/en/;https://www.lcbo.com/fr/;https://www.lcbo.com/content/lcbo/fr/"
+      }
+    }
+  }, {
+    "formId" : "5340",
+    "isCustomHtmlEnabled" : "false",
+    "urlVersion" : "V2",
+    "formHtmlUrl" : "https://resources.digital-cloud.medallia.ca/md-form/website/1.23.1/index.html",
+    "formDataUrl" : "https://resources.digital-cloud.medallia.ca/wdccan/752/forms/5340/formDataV2_1768932922368_###LANGUAGE_CODE###.json",
+    "formWidth" : "450",
+    "formHeight" : "450",
+    "isFixedSize" : "false",
+    "isFullWidthEmbedded" : "null",
+    "designSettings" : {
+      "formBackgroundColor" : "",
+      "thankYouPageBackgroundColor" : ""
+    },
+    "formLocalizationSettings" : {
+      "defaultLanguage" : "en",
+      "useCustomParam" : "true",
+      "customParam" : "1130"
+    },
+    "formJsonRelativePath" : "wdccan/752/forms/5340/formData1768932922368_###LANGUAGE_CODE###.json",
+    "formJsonV2RelativePath" : "wdccan/752/forms/5340/formDataV2_1768932922368_###LANGUAGE_CODE###.json",
+    "inviteJsonRelativePath" : "wdccan/752/forms/5340/invitationData1769456637619_###LANGUAGE_CODE###.json",
+    "availableLanguages" : [ "en", "fr" ],
+    "triggerAvailableLanguages" : [ "en", "fr" ],
+    "functionFileUrl" : "",
+    "customParams" : [ 1217, 1131, 1130, 44, 28 ],
+    "formType" : "invitation",
+    "formDisplay" : {
+      "displayType" : "lightbox",
+      "displayDirection" : "centerRight",
+      "isSelfHosted" : "",
+      "selfHostedUrl" : ""
+    },
+    "inviteData" : {
+      "inviteUrl" : "https://resources.digital-cloud.medallia.ca/wdccan/752/forms/5340/invitation1769456637560.html",
+      "inviteHeight" : "400",
+      "inviteWidth" : "600",
+      "skipInvitation" : "true",
+      "invitationPosition" : "bottom",
+      "inviteDataUrl" : "https://resources.digital-cloud.medallia.ca/wdccan/752/forms/5340/invitationData1769456637619_###LANGUAGE_CODE###.json"
+    },
+    "onSiteData" : {
+      "kampyleInvitePerSession" : {
+        "inviteOncePerSession" : "false"
+      },
+      "kampyleInvitePercentageUsers" : {
+        "prec" : "100.0"
+      },
+      "devicetypes" : [ "desktop", "mobile", "tablet" ]
+    },
+    "urlRules" : {
+      "exclusionUrl" : {
+        "rule" : "https://mcstaging3.lcbo.com/65418725_lcboadmin;https://www.lcbo.com;https://www.lcbo.com/en/;https://www.lcbo.com/content/lcbo/en/;https://www.lcbo.com/fr/;https://www.lcbo.com/content/lcbo/fr/;https://www.lcbo.com/en/checkout;https://www.lcbo.com/fr/checkout;https://mcstaging.lcbo.com/en/;https://mcstaging2.lcbo.com/en/;https://mcstaging4.lcbo.com/en/;https://mcstaging4.lcbo.com/content/lcbo/fr/;https://mcstaging4.lcbo.com/content/lcbo/en/;https://lx227.lcbo.com;https://pstg-wc.lcbo.com;https://qastg-wc.lcbo.com;https://qa.lcbo.com;https://qalive-wc.lcbo.com;/webapp/wcs/stores/servlet/AjaxOrderItemDisplayView;/webapp/wcs/stores/servlet/OrderShippingBillingView;/webapp/wcs/stores/servlet/SingleShipmentOrderSummaryView;/webapp/wcs/stores/servlet/OrderShippingBillingConfirmationView;/content/lcbo/en/homepage/covid-19-lcbo-response.html;https://www.lcbo.com/en/corporate-gifting?icid=megamenu_corp-gifting_p9_hmpg_w1_en;https://www.lcbo.com/en/corporate-gifting;https://www.lcbo.com/fr/corporate-gifting;https://www.lcbo.com/fr/checkout;https://mcstaging.lcbo.com/fr/;https://mcstaging2.lcbo.com/fr/;https://mcstaging4.lcbo.com/fr/;https://lx227.lcbo.com;https://pstg-wc.lcbo.com;https://qastg-wc.lcbo.com;https://qa.lcbo.com;https://qalive-wc.lcbo.com;/webapp/wcs/stores/servlet/AjaxOrderItemDisplayView;/webapp/wcs/stores/servlet/OrderShippingBillingView;/webapp/wcs/stores/servlet/SingleShipmentOrderSummaryView;/webapp/wcs/stores/servlet/OrderShippingBillingConfirmationView;/content/lcbo/fr/homepage/covid-19-lcbo-response.html;https://www.lcbo.com/en/corporate-gifting;https://www.lcbo.com/fr/corporate-gifting;https://www.lcbo.com/en/checkout/onepage/success;https://www.lcbo.com/fr/checkout/onepage/success"
+      },
+      "inclusionUrl" : {
+        "rule" : "https://mcstaging3.lcbo.com;https://mcstaging3.lcbo.com/en/;https://mcstaging3.lcbo.com/fr/;https://mcstaging3.lcbo.com/content/lcbo/fr/;https://mcstaging3.lcbo.com/content/lcbo/en/"
+      }
+    }
+  }, {
+    "formId" : "3859",
+    "isCustomHtmlEnabled" : "false",
+    "urlVersion" : "V2",
+    "formHtmlUrl" : "https://resources.digital-cloud.medallia.ca/md-form/website/1.23.0/index.html",
+    "formDataUrl" : "https://resources.digital-cloud.medallia.ca/wdccan/752/forms/3859/formDataV2_1762327698451_###LANGUAGE_CODE###.json",
+    "formWidth" : "450",
+    "formHeight" : "450",
+    "isFixedSize" : "false",
+    "isFullWidthEmbedded" : "null",
+    "designSettings" : {
+      "formBackgroundColor" : "",
+      "thankYouPageBackgroundColor" : ""
+    },
+    "formLocalizationSettings" : {
+      "defaultLanguage" : "en",
+      "useCustomParam" : "true",
+      "customParam" : "1130"
+    },
+    "formJsonRelativePath" : "wdccan/752/forms/3859/formData1762327698451_###LANGUAGE_CODE###.json",
+    "formJsonV2RelativePath" : "wdccan/752/forms/3859/formDataV2_1762327698451_###LANGUAGE_CODE###.json",
+    "inviteJsonRelativePath" : "wdccan/752/forms/3859/invitationData1762327765856_###LANGUAGE_CODE###.json",
+    "availableLanguages" : [ "en", "fr" ],
+    "triggerAvailableLanguages" : [ "fr", "en" ],
+    "functionFileUrl" : "",
+    "customParams" : [ 1217, 1131, 1130, 44, 28 ],
+    "formType" : "invitation",
+    "formDisplay" : {
+      "displayType" : "lightbox",
+      "displayDirection" : "centerRight",
+      "isSelfHosted" : "",
+      "selfHostedUrl" : ""
+    },
+    "inviteData" : {
+      "inviteUrl" : "https://resources.digital-cloud.medallia.ca/wdccan/752/forms/3859/invitation1762327765764.html",
+      "inviteHeight" : "400",
+      "inviteWidth" : "700",
+      "skipInvitation" : "true",
+      "invitationPosition" : "top",
+      "inviteDataUrl" : "https://resources.digital-cloud.medallia.ca/wdccan/752/forms/3859/invitationData1762327765856_###LANGUAGE_CODE###.json"
+    },
+    "onSiteData" : {
+      "submitted" : {
+        "days" : "90"
+      },
+      "declined" : {
+        "days" : "90"
+      },
+      "kampyleInvitePerSession" : {
+        "inviteOncePerSession" : "false"
+      },
+      "devicetypes" : [ "desktop", "mobile", "tablet" ],
+      "kampyleInvitePercentageUsers" : {
+        "prec" : "10.0"
+      }
+    },
+    "urlRules" : {
+      "exclusionUrl" : {
+        "rule" : "https://mcstaging.lcbo.com/en/;https://mcstaging2.lcbo.com/en/;https://mcstaging3.lcbo.com/en/;https://mcstaging4.lcbo.com/en/;https://lx227.lcbo.com;https://pstg-wc.lcbo.com;https://qastg-wc.lcbo.com;https://qa.lcbo.com;https://qalive-wc.lcbo.com;https://mcstaging.lcbo.com/fr/;https://mcstaging2.lcbo.com/fr/;https://mcstaging3.lcbo.com/fr/;https://mcstaging4.lcbo.com/fr/;https://lx227.lcbo.com;https://pstg-wc.lcbo.com;https://qastg-wc.lcbo.com;https://qa.lcbo.com;https://qalive-wc.lcbo.com"
+      },
+      "inclusionUrl" : {
+        "rule" : "https://www.lcbo.com/en/checkout/onepage/success;https://www.lcbo.com/fr/checkout/onepage/success"
+      }
+    }
+  } ],
+  "domainsConfiguration" : {
+    "allDomainsAllowed" : true
+  },
+  "integrations" : {
+    "recordedSessions" : [ ]
+  },
+  "usersnapEnvId" : "df2e4e3b-4b02-4e88-9409-89959aa0da34",
+  "usersnapOnpremWidgetLoaderPath" : "usersnap-widget/4.10.0/loader.js",
+  "propertyMessages" : {
+    "localizationSettings" : {
+      "defaultLanguage" : "en",
+      "useCustomParam" : false,
+      "customParam" : null
+    },
+    "messagesData" : {
+      "noJsonMessage" : {
+        "en" : {
+          "type" : "noJsonMessage",
+          "title" : "Oops",
+          "body" : "We can't collect your feedback at the moment",
+          "close" : "Close error modal"
+        }
+      }
+    }
+  },
+  "globalResourcesUrl" : "https://resources.digital-cloud.medallia.ca/liveApp/resources",
+  "submitUrlPrefix" : "https://feedback.digital-cloud.medallia.ca/",
+  "submitUrlSuffix" : "feedback/api/feedback/submit",
+  "analyticsSubmitEventsUrl" : "https://analytics-fe.digital-cloud.medallia.ca/api/web/events",
+  "mecIntegrationId" : "lcbo-can-medallia-ca-lcbo",
+  "submitUrlWithBackendUUID" : "https://feedback.digital-cloud.medallia.ca/feedback/api/v2/feedback/submit",
+  "textAreaLimit" : null,
+  "customParams" : [ {
+    "id" : 1217,
+    "unique_name" : "location.href",
+    "type" : "Text",
+    "source" : "Var",
+    "source_name" : "location.href",
+    "is_identifier" : false
+  }, {
+    "id" : 1131,
+    "unique_name" : "Store Name",
+    "type" : "Text",
+    "source" : "Var",
+    "source_name" : "localStorage.storeName",
+    "is_identifier" : false
+  }, {
+    "id" : 1130,
+    "unique_name" : "Language",
+    "type" : "Text",
+    "source" : "Var",
+    "source_name" : "document.documentElement.lang",
+    "is_identifier" : false
+  }, {
+    "id" : 44,
+    "unique_name" : "Dummy Language (DO NOT DELETE)",
+    "type" : "Text",
+    "source" : "Var",
+    "source_name" : "DummyLanguage",
+    "is_identifier" : false
+  }, {
+    "id" : 28,
+    "unique_name" : "Web Language",
+    "type" : "Text",
+    "source" : "Var",
+    "source_name" : "lcbo.languageSelector.preferedLang",
+    "is_identifier" : false
+  } ],
+  "digitalAnalyticsDynamicEventsList" : [ "nebula_page_view", "nebula_form_show", "nebula_invitation_show", "nebula_form_submitted", "nebula_invite_accepted", "nebula_after_http_post_request_on_error", "nebula_after_http_post_request_on_error_status_code", "nebula_after_http_post_request_on_timeout", "nebula_submitFeedbackFailed", "nebula_popup_blocked", "MDigital_Invalid_Origin", "nebula_feedbackUuidIsNull" ]
+}

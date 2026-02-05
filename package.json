@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "probe:lcbo": "node tools/lcbo-probe.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.0"
   }
 }
