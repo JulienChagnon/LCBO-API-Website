@@ -1,3 +1,6 @@
+const http = require('http');
+const https = require('https');
+
 const LCBO_GRAPHQL_ENDPOINT = process.env.LCBO_GRAPHQL_ENDPOINT || 'https://api.lcbo.dev/graphql';
 const STORE_RADIUS_KM = Number(process.env.LCBO_STORE_RADIUS_KM || '10');
 
@@ -161,10 +164,59 @@ function jsonResponse(event, statusCode, payload) {
   };
 }
 
+function requestText(url, options = {}) {
+  return new Promise((resolve, reject) => {
+    const target = new URL(url);
+    const transport = target.protocol === 'https:' ? https : http;
+
+    const method = String(options.method || 'GET').toUpperCase();
+    const body = options.body ? String(options.body) : '';
+    const headers = {
+      Accept: 'application/json',
+      ...(options.headers || {})
+    };
+    if (body) {
+      headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+      headers['Content-Length'] = Buffer.byteLength(body);
+    }
+    headers['User-Agent'] = headers['User-Agent'] || 'get-sloshed-netlify-function/1.0';
+
+    const req = transport.request(
+      {
+        protocol: target.protocol,
+        hostname: target.hostname,
+        port: target.port || (target.protocol === 'https:' ? 443 : 80),
+        method,
+        path: `${target.pathname}${target.search}`,
+        headers
+      },
+      (res) => {
+        let data = '';
+        res.setEncoding('utf8');
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
+        res.on('end', () => {
+          resolve({ statusCode: res.statusCode || 0, headers: res.headers || {}, body: data });
+        });
+      }
+    );
+
+    const timeoutMs = Number(options.timeoutMs || 12000);
+    req.setTimeout(timeoutMs, () => {
+      req.destroy(new Error('Request timeout'));
+    });
+
+    req.on('error', reject);
+    if (body) req.write(body);
+    req.end();
+  });
+}
+
 async function safeJson(url, options = {}) {
-  const response = await fetch(url, options);
-  if (!response.ok) return null;
-  const text = await response.text();
+  const response = await requestText(url, options);
+  if (response.statusCode < 200 || response.statusCode >= 300) return null;
+  const text = response.body || '';
   if (!text) return null;
   try {
     return JSON.parse(text);
@@ -174,15 +226,19 @@ async function safeJson(url, options = {}) {
 }
 
 async function gqlRequest(query, variables) {
-  const response = await fetch(LCBO_GRAPHQL_ENDPOINT, {
+  const body = JSON.stringify({ query, variables });
+  const response = await requestText(LCBO_GRAPHQL_ENDPOINT, {
     method: 'POST',
-    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query, variables }),
-    cache: 'no-store'
+    headers: { 'Content-Type': 'application/json' },
+    body,
+    timeoutMs: 15000
   });
 
-  if (!response.ok) throw new Error(`GraphQL request failed (${response.status})`);
-  const payload = await response.json();
+  if (response.statusCode < 200 || response.statusCode >= 300) {
+    throw new Error(`GraphQL request failed (${response.statusCode || 'unknown'})`);
+  }
+
+  const payload = response.body ? JSON.parse(response.body) : null;
   if (payload && Array.isArray(payload.errors) && payload.errors.length) {
     const message = payload.errors[0] && payload.errors[0].message ? payload.errors[0].message : 'GraphQL error';
     throw new Error(message);
@@ -447,4 +503,3 @@ exports.handler = async (event) => {
     return jsonResponse(event, 502, { error: error && error.message ? error.message : 'Upstream error' });
   }
 };
-

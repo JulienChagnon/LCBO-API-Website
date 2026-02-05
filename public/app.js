@@ -66,6 +66,8 @@ const HAS_ABSOLUTE_API_BASE =
   typeof CONFIG.apiBase === 'string' && /^https?:\/\//i.test(CONFIG.apiBase);
 const GRAPHQL_ONLY =
   !!CONFIG.forceGraphql || !CONFIG.apiBase || (IS_GH_PAGES && !HAS_ABSOLUTE_API_BASE);
+const ALLOW_BROWSER_GRAPHQL =
+  GRAPHQL_ONLY || (typeof location !== 'undefined' && location.protocol === 'file:');
 
 const PRICE_RANGE = {
   min: 10,
@@ -2089,12 +2091,12 @@ async function fetchAllProducts(storeId, preferAbv = true, options = {}) {
       const storeUrl = makeUrl(`/stores/${storeId}/products?${params.toString()}`);
       const storeData = await fetchJson(storeUrl);
       products = extractProducts(storeData);
-      if (!products.length && state.apiFailed) {
-        try {
-          let fallback = [];
-          if (preferAbv) {
-            try {
-              fallback = await fetchStoreTopValueProductsByGraphql(storeId, '', preferAbv, limit);
+    if (!products.length && state.apiFailed && ALLOW_BROWSER_GRAPHQL) {
+      try {
+        let fallback = [];
+        if (preferAbv) {
+          try {
+            fallback = await fetchStoreTopValueProductsByGraphql(storeId, '', preferAbv, limit);
             } catch {
               fallback = [];
             }
@@ -2116,12 +2118,12 @@ async function fetchAllProducts(storeId, preferAbv = true, options = {}) {
       const generalUrl = makeUrl(`/products?${params.toString()}`);
       const data = await fetchJson(generalUrl);
       products = extractProducts(data);
-      if (!products.length && state.apiFailed) {
-        try {
-          const fallback = await fetchProductsByGraphql('', preferAbv, limit);
-          if (fallback.length) {
-            state.apiFailed = false;
-            state.apiError = '';
+    if (!products.length && state.apiFailed && ALLOW_BROWSER_GRAPHQL) {
+      try {
+        const fallback = await fetchProductsByGraphql('', preferAbv, limit);
+        if (fallback.length) {
+          state.apiFailed = false;
+          state.apiError = '';
             products = fallback;
           }
         } catch (error) {
@@ -2278,7 +2280,7 @@ async function fetchStoresByQuery(query, options = {}) {
     const data = await fetchJson(url, { tokenGuard });
     const stores = extractStores(data);
     if (stores.length) return stores;
-    if (state.apiFailed) {
+    if (state.apiFailed && ALLOW_BROWSER_GRAPHQL) {
       try {
         const fallback = await fetchStoresByGraphql(candidate, 4);
         if (fallback.length) {
