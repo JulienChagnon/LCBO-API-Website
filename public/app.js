@@ -7,7 +7,16 @@ const DEFAULT_CONFIG = {
   graphqlEndpoint: 'https://api.lcbo.dev/graphql',
   storeRadiusKm: 10,
   storeFetchMax: 800,
-  mediaFiles: ['Media/coorslight.png', 'Media/smirIce.png'],
+  mediaFiles: [
+    'Media/coorslight.png',
+    'Media/cutwater.png',
+    'Media/fireball.png',
+    'Media/malibu.png',
+    'Media/mikes.png',
+    'Media/pbr.png',
+    'Media/smirIce.png',
+    'Media/twistedTea.png'
+  ],
   mediaFileScales: {},
   mediaMinSize: 60,
   mediaMaxSize: 140
@@ -557,7 +566,7 @@ function initFloatingMedia() {
   const resolveMaxSprites = () => (lastMobileViewport ? 3 : 14);
 
   const settings = {
-    manifestUrl: '/media-manifest.json',
+    manifestUrl: 'media-manifest.json',
     maxSprites: resolveMaxSprites(),
     minSize: baseSpriteSize,
     maxSize: baseSpriteSize,
@@ -598,10 +607,11 @@ function initFloatingMedia() {
     if (!item) return null;
     if (/^https?:/i.test(item)) return item;
     const cleaned = String(item).replace(/^[\\/]+/, '');
-    if (window.location && window.location.protocol === 'file:') {
-      return new URL(cleaned, window.location.href).toString();
+    try {
+      return new URL(cleaned, document.baseURI).toString();
+    } catch {
+      return cleaned;
     }
-    return cleaned.startsWith('/') ? cleaned : `/${cleaned}`;
   };
   const normalizeMediaList = (files) =>
     (files || [])
@@ -632,7 +642,11 @@ function initFloatingMedia() {
       const scale = Number(value);
       if (!Number.isFinite(scale) || scale <= 0) return;
       const normalizedKey = normalizeMediaKey(key);
-      if (normalizedKey) map.set(normalizedKey, scale);
+      if (normalizedKey) {
+        map.set(normalizedKey, scale);
+        const filename = normalizedKey.split('/').pop();
+        if (filename) map.set(filename, scale);
+      }
     });
     return map;
   };
@@ -2556,6 +2570,21 @@ async function geocodePostalClient(postalRaw) {
     const place = data && Array.isArray(data.places) ? data.places[0] : null;
     const latitude = place ? Number(place.latitude) : NaN;
     const longitude = place ? Number(place.longitude) : NaN;
+    if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+      return { latitude, longitude };
+    }
+  }
+
+  // Browser-safe fallback: Open-Meteo's geocoding API tends to allow CORS,
+  // unlike many free geocoders.
+  for (const candidate of candidates) {
+    const token = encodeURIComponent(`${String(candidate).trim()} Canada`);
+    const data = await fetchExternalJson(
+      `https://geocoding-api.open-meteo.com/v1/search?name=${token}&count=1&language=en&format=json&country_code=CA`
+    );
+    const first = data && Array.isArray(data.results) ? data.results[0] : null;
+    const latitude = first ? Number(first.latitude) : NaN;
+    const longitude = first ? Number(first.longitude) : NaN;
     if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
       return { latitude, longitude };
     }

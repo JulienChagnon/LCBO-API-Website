@@ -7,6 +7,16 @@ window.APP_CONFIG = {
   PER_PAGE: 120,
   STORE_FETCH_MAX: 1000, // Increased max fetch
   RESULTS_LIMIT: 24, // Show a few more results
+  MEDIA_FILES: [
+    'Media/coorslight.png',
+    'Media/cutwater.png',
+    'Media/fireball.png',
+    'Media/malibu.png',
+    'Media/mikes.png',
+    'Media/pbr.png',
+    'Media/smirIce.png',
+    'Media/twistedTea.png'
+  ],
   MEDIA_FILE_SCALES: {
     'Media/malibu.png': 2,
     'Media/smirIce.png': 2,
