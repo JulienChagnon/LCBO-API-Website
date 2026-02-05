@@ -17,6 +17,10 @@
   --water-foam: rgba(188, 222, 228, 0.55);
   --water-foam-2: rgba(130, 165, 170, 0.45);
   --water-scroll: 0px;
+  --scrollbar-track: rgba(255, 255, 255, 0.08);
+  --scrollbar-thumb: rgba(242, 193, 99, 0.72);
+  --scrollbar-thumb-hover: rgba(242, 139, 100, 0.85);
+  --scrollbar-size: 12px;
 }
 
 * {
@@ -31,6 +35,34 @@ body {
   background-color: #050608;
   min-height: 100vh;
   overflow-x: hidden;
+}
+
+html {
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-width: thin;
+}
+
+body::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+}
+
+body::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+body::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+body::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+body::-webkit-scrollbar-corner {
+  background: var(--scrollbar-track);
 }
 
 #media-canvas {

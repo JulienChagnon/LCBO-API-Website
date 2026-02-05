@@ -612,10 +612,29 @@ function initFloatingMedia() {
     x: Number(clientX) + getScrollX(),
     y: Number(clientY) + getScrollY()
   });
-  const getWorldBounds = () => ({
-    width: worldWidth || width,
-    height: worldHeight || height
-  });
+  const getViewportInset = () => {
+    const minDim = Math.min(width || 0, height || 0);
+    const baseInset = Math.max(10, Math.round(settings.maxSize * 0.35));
+    const maxInset = Math.max(10, Math.round(minDim * 0.15));
+    return Math.min(baseInset, maxInset);
+  };
+  const getViewportBounds = () => {
+    const inset = getViewportInset();
+    const scrollX = getScrollX();
+    const scrollY = getScrollY();
+    const left = scrollX + inset;
+    const top = scrollY + inset;
+    const right = scrollX + width - inset;
+    const bottom = scrollY + height - inset;
+    return {
+      left,
+      top,
+      right,
+      bottom,
+      width: Math.max(1, right - left),
+      height: Math.max(1, bottom - top)
+    };
+  };
   const resolveMediaUrl = (item) => {
     if (!item) return null;
     if (/^https?:/i.test(item)) return item;
@@ -665,6 +684,46 @@ function initFloatingMedia() {
   };
 
   const mediaScaleMap = buildMediaScaleMap(CONFIG.mediaFileScales);
+
+  const computeOpaqueBounds = (img) => {
+    if (!img) return null;
+    const width = img.naturalWidth || img.width || 0;
+    const height = img.naturalHeight || img.height || 0;
+    if (!width || !height) return null;
+    const scratch = document.createElement('canvas');
+    scratch.width = width;
+    scratch.height = height;
+    const scratchCtx = scratch.getContext('2d', { willReadFrequently: true });
+    if (!scratchCtx) return null;
+    try {
+      scratchCtx.clearRect(0, 0, width, height);
+      scratchCtx.drawImage(img, 0, 0, width, height);
+      const data = scratchCtx.getImageData(0, 0, width, height).data;
+      let minX = width;
+      let minY = height;
+      let maxX = -1;
+      let maxY = -1;
+      const alphaThreshold = 8;
+      for (let y = 0; y < height; y += 1) {
+        const rowIndex = y * width * 4;
+        for (let x = 0; x < width; x += 1) {
+          const alpha = data[rowIndex + x * 4 + 3];
+          if (alpha <= alphaThreshold) continue;
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+      if (maxX < minX || maxY < minY) return null;
+      return {
+        width: maxX - minX + 1,
+        height: maxY - minY + 1
+      };
+    } catch {
+      return null;
+    }
+  };
 
   const resolveMediaScale = (src) => {
     const normalized = normalizeMediaKey(src);
@@ -779,54 +838,54 @@ function initFloatingMedia() {
     lastBlockerUpdate = performance.now();
   };
 
-  const circleHitsRect = (sprite, rect) => {
-    const nearestX = clamp(sprite.x, rect.left, rect.right);
-    const nearestY = clamp(sprite.y, rect.top, rect.bottom);
-    const dx = sprite.x - nearestX;
-    const dy = sprite.y - nearestY;
-    return dx * dx + dy * dy < sprite.radius * sprite.radius;
+  const getSpriteHalfWidth = (sprite) => {
+    if (Number.isFinite(sprite.hitHalfWidth)) return sprite.hitHalfWidth;
+    if (Number.isFinite(sprite.width)) return sprite.width / 2;
+    return sprite.radius || 0;
+  };
+  const getSpriteHalfHeight = (sprite) => {
+    if (Number.isFinite(sprite.hitHalfHeight)) return sprite.hitHalfHeight;
+    if (Number.isFinite(sprite.height)) return sprite.height / 2;
+    return sprite.radius || 0;
+  };
+
+  const rectHitsRect = (sprite, rect) => {
+    const halfWidth = getSpriteHalfWidth(sprite);
+    const halfHeight = getSpriteHalfHeight(sprite);
+    const left = sprite.x - halfWidth;
+    const right = sprite.x + halfWidth;
+    const top = sprite.y - halfHeight;
+    const bottom = sprite.y + halfHeight;
+    return right > rect.left && left < rect.right && bottom > rect.top && top < rect.bottom;
   };
 
   const resolveBlocker = (sprite, rect) => {
-    const nearestX = clamp(sprite.x, rect.left, rect.right);
-    const nearestY = clamp(sprite.y, rect.top, rect.bottom);
-    let dx = sprite.x - nearestX;
-    let dy = sprite.y - nearestY;
-    const distSq = dx * dx + dy * dy;
-    const radius = sprite.radius;
-    if (distSq >= radius * radius) return;
+    const halfWidth = getSpriteHalfWidth(sprite);
+    const halfHeight = getSpriteHalfHeight(sprite);
+    const left = sprite.x - halfWidth;
+    const right = sprite.x + halfWidth;
+    const top = sprite.y - halfHeight;
+    const bottom = sprite.y + halfHeight;
+    if (right <= rect.left || left >= rect.right || bottom <= rect.top || top >= rect.bottom) return;
 
-    if (distSq === 0) {
-      const toLeft = Math.abs(sprite.x - rect.left);
-      const toRight = Math.abs(rect.right - sprite.x);
-      const toTop = Math.abs(sprite.y - rect.top);
-      const toBottom = Math.abs(rect.bottom - sprite.y);
-      const min = Math.min(toLeft, toRight, toTop, toBottom);
-      if (min === toLeft) {
-        sprite.x = rect.left - radius;
-        sprite.vx = -Math.abs(sprite.vx);
-      } else if (min === toRight) {
-        sprite.x = rect.right + radius;
-        sprite.vx = Math.abs(sprite.vx);
-      } else if (min === toTop) {
-        sprite.y = rect.top - radius;
-        sprite.vy = -Math.abs(sprite.vy);
-      } else {
-        sprite.y = rect.bottom + radius;
-        sprite.vy = Math.abs(sprite.vy);
-      }
-      return;
-    }
+    const overlapLeft = right - rect.left;
+    const overlapRight = rect.right - left;
+    const overlapTop = bottom - rect.top;
+    const overlapBottom = rect.bottom - top;
+    const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
 
-    const dist = Math.sqrt(distSq);
-    const nx = dx / dist;
-    const ny = dy / dist;
-    sprite.x = nearestX + nx * (radius + 0.5);
-    sprite.y = nearestY + ny * (radius + 0.5);
-    const dot = sprite.vx * nx + sprite.vy * ny;
-    if (dot < 0) {
-      sprite.vx -= 2 * dot * nx;
-      sprite.vy -= 2 * dot * ny;
+    if (minOverlap === overlapLeft) {
+      sprite.x -= overlapLeft;
+      sprite.vx = -Math.abs(sprite.vx);
+    } else if (minOverlap === overlapRight) {
+      sprite.x += overlapRight;
+      sprite.vx = Math.abs(sprite.vx);
+    } else if (minOverlap === overlapTop) {
+      sprite.y -= overlapTop;
+      sprite.vy = -Math.abs(sprite.vy);
+    } else {
+      sprite.y += overlapBottom;
+      sprite.vy = Math.abs(sprite.vy);
     }
   };
 
@@ -844,6 +903,7 @@ function initFloatingMedia() {
             const img = new Image();
             img.onload = () => {
               img.__mediaScale = resolveMediaScale(src);
+              img.__mediaBounds = computeOpaqueBounds(img);
               results.push(img);
               resolve();
             };
@@ -864,7 +924,13 @@ function initFloatingMedia() {
     const scale = target / maxDim;
     const spriteWidth = img.width * scale;
     const spriteHeight = img.height * scale;
-    const radius = Math.max(spriteWidth, spriteHeight) / 2;
+    const bounds = img.__mediaBounds;
+    const hitWidth =
+      bounds && Number.isFinite(bounds.width) && bounds.width > 0 ? bounds.width : img.width;
+    const hitHeight =
+      bounds && Number.isFinite(bounds.height) && bounds.height > 0 ? bounds.height : img.height;
+    const hitHalfWidth = Math.max(1, (hitWidth * scale) / 2);
+    const hitHalfHeight = Math.max(1, (hitHeight * scale) / 2);
     const speed = randBetween(settings.minSpeed, settings.maxSpeed);
     const angle = randBetween(0, Math.PI * 2);
     let rotationSpeed = randBetween(-settings.maxRotationSpeed, settings.maxRotationSpeed);
@@ -872,26 +938,35 @@ function initFloatingMedia() {
       rotationSpeed = Math.sign(rotationSpeed || 1) * settings.minRotationSpeed;
     }
 
+    const { left, right, top, bottom } = getViewportBounds();
+    const minX = left + hitHalfWidth;
+    const maxX = Math.max(minX, right - hitHalfWidth);
+    const minY = top + hitHalfHeight;
+    const maxY = Math.max(minY, bottom - hitHalfHeight);
+
     return {
       img,
-      x: randBetween(radius, Math.max(radius, (worldWidth || width) - radius)),
-      y: randBetween(radius, Math.max(radius, (worldHeight || height) - radius)),
+      x: randBetween(minX, maxX),
+      y: randBetween(minY, maxY),
       vx: Math.cos(angle) * speed,
       vy: Math.sin(angle) * speed,
       rotation: randBetween(0, Math.PI * 2),
       rotationSpeed,
       width: spriteWidth,
       height: spriteHeight,
-      radius
+      hitHalfWidth,
+      hitHalfHeight
     };
   };
 
   const isOverlapping = (a, b) => {
-    const dx = a.x - b.x;
-    const dy = a.y - b.y;
-    const distSq = dx * dx + dy * dy;
-    const minDist = a.radius + b.radius;
-    return distSq < minDist * minDist;
+    const halfWidthA = getSpriteHalfWidth(a);
+    const halfHeightA = getSpriteHalfHeight(a);
+    const halfWidthB = getSpriteHalfWidth(b);
+    const halfHeightB = getSpriteHalfHeight(b);
+    const overlapX = halfWidthA + halfWidthB - Math.abs(a.x - b.x);
+    const overlapY = halfHeightA + halfHeightB - Math.abs(a.y - b.y);
+    return overlapX > 0 && overlapY > 0;
   };
 
   const buildSprites = (images) => {
@@ -910,7 +985,7 @@ function initFloatingMedia() {
       while (
         attempts < 35 &&
         (sprites.some((existing) => isOverlapping(existing, sprite)) ||
-          blockers.some((rect) => circleHitsRect(sprite, rect)))
+          blockers.some((rect) => rectHitsRect(sprite, rect)))
       ) {
         sprite = createSprite(img);
         attempts += 1;
@@ -920,21 +995,22 @@ function initFloatingMedia() {
   };
 
   const resolveWall = (sprite) => {
-    const boundsWidth = worldWidth || width;
-    const boundsHeight = worldHeight || height;
-    if (sprite.x - sprite.radius < 0) {
-      sprite.x = sprite.radius;
+    const { left, right, top, bottom } = getViewportBounds();
+    const halfWidth = getSpriteHalfWidth(sprite);
+    const halfHeight = getSpriteHalfHeight(sprite);
+    if (sprite.x - halfWidth < left) {
+      sprite.x = left + halfWidth;
       sprite.vx = Math.abs(sprite.vx);
-    } else if (sprite.x + sprite.radius > boundsWidth) {
-      sprite.x = boundsWidth - sprite.radius;
+    } else if (sprite.x + halfWidth > right) {
+      sprite.x = right - halfWidth;
       sprite.vx = -Math.abs(sprite.vx);
     }
 
-    if (sprite.y - sprite.radius < 0) {
-      sprite.y = sprite.radius;
+    if (sprite.y - halfHeight < top) {
+      sprite.y = top + halfHeight;
       sprite.vy = Math.abs(sprite.vy);
-    } else if (sprite.y + sprite.radius > boundsHeight) {
-      sprite.y = boundsHeight - sprite.radius;
+    } else if (sprite.y + halfHeight > bottom) {
+      sprite.y = bottom - halfHeight;
       sprite.vy = -Math.abs(sprite.vy);
     }
   };
@@ -944,44 +1020,51 @@ function initFloatingMedia() {
       for (let j = i + 1; j < sprites.length; j += 1) {
         const a = sprites[i];
         const b = sprites[j];
+        const halfWidthA = getSpriteHalfWidth(a);
+        const halfHeightA = getSpriteHalfHeight(a);
+        const halfWidthB = getSpriteHalfWidth(b);
+        const halfHeightB = getSpriteHalfHeight(b);
         const dx = b.x - a.x;
         const dy = b.y - a.y;
-        const dist = Math.hypot(dx, dy);
-        const minDist = a.radius + b.radius;
-        if (dist === 0 || dist >= minDist) continue;
-
-        const nx = dx / dist;
-        const ny = dy / dist;
-
-        const va = a.vx * nx + a.vy * ny;
-        const vb = b.vx * nx + b.vy * ny;
-        const diff = va - vb;
+        const overlapX = halfWidthA + halfWidthB - Math.abs(dx);
+        const overlapY = halfHeightA + halfHeightB - Math.abs(dy);
+        if (overlapX <= 0 || overlapY <= 0) continue;
 
         const lockA = lockedSprite && a === lockedSprite;
         const lockB = lockedSprite && b === lockedSprite;
 
-        if (!lockA) {
-          a.vx -= diff * nx;
-          a.vy -= diff * ny;
-        }
-        if (!lockB) {
-          b.vx += diff * nx;
-          b.vy += diff * ny;
-        }
+        if (overlapX < overlapY) {
+          const sign = dx === 0 ? (a.vx >= 0 ? 1 : -1) : Math.sign(dx);
+          const va = a.vx;
+          const vb = b.vx;
+          if (!lockA) a.vx = vb;
+          if (!lockB) b.vx = va;
 
-        const overlap = minDist - dist;
-        if (lockA && !lockB) {
-          b.x += nx * overlap;
-          b.y += ny * overlap;
-        } else if (lockB && !lockA) {
-          a.x -= nx * overlap;
-          a.y -= ny * overlap;
+          if (lockA && !lockB) {
+            b.x += sign * overlapX;
+          } else if (lockB && !lockA) {
+            a.x -= sign * overlapX;
+          } else {
+            const correction = overlapX / 2;
+            a.x -= sign * correction;
+            b.x += sign * correction;
+          }
         } else {
-          const correction = overlap / 2;
-          a.x -= nx * correction;
-          a.y -= ny * correction;
-          b.x += nx * correction;
-          b.y += ny * correction;
+          const sign = dy === 0 ? (a.vy >= 0 ? 1 : -1) : Math.sign(dy);
+          const va = a.vy;
+          const vb = b.vy;
+          if (!lockA) a.vy = vb;
+          if (!lockB) b.vy = va;
+
+          if (lockA && !lockB) {
+            b.y += sign * overlapY;
+          } else if (lockB && !lockA) {
+            a.y -= sign * overlapY;
+          } else {
+            const correction = overlapY / 2;
+            a.y -= sign * correction;
+            b.y += sign * correction;
+          }
         }
       }
     }
@@ -991,10 +1074,16 @@ function initFloatingMedia() {
     const grabPadding = 10;
     for (let i = sprites.length - 1; i >= 0; i -= 1) {
       const sprite = sprites[i];
-      const dx = worldX - sprite.x;
-      const dy = worldY - sprite.y;
-      const radius = sprite.radius + grabPadding;
-      if (dx * dx + dy * dy <= radius * radius) return i;
+      const halfWidth = getSpriteHalfWidth(sprite) + grabPadding;
+      const halfHeight = getSpriteHalfHeight(sprite) + grabPadding;
+      if (
+        worldX >= sprite.x - halfWidth &&
+        worldX <= sprite.x + halfWidth &&
+        worldY >= sprite.y - halfHeight &&
+        worldY <= sprite.y + halfHeight
+      ) {
+        return i;
+      }
     }
     return -1;
   };
@@ -1035,7 +1124,7 @@ function initFloatingMedia() {
   const updateDrag = (pointer) => {
     if (!drag || !drag.sprite) return;
     const sprite = drag.sprite;
-    const { width: boundsWidth, height: boundsHeight } = getWorldBounds();
+    const { left: boundsLeft, right: boundsRight, top: boundsTop, bottom: boundsBottom } = getViewportBounds();
     const now = Number.isFinite(pointer.time) ? pointer.time : performance.now();
     const dt = Math.max((now - drag.lastTime) / 1000, 0.001);
 
@@ -1138,8 +1227,8 @@ function initFloatingMedia() {
     const targetX = worldX + drag.offsetX + applyPullX;
     const targetY = worldY + drag.offsetY + applyPullY;
 
-    drag.targetX = clamp(targetX, -overshootLimit, boundsWidth + overshootLimit);
-    drag.targetY = clamp(targetY, -overshootLimit, boundsHeight + overshootLimit);
+    drag.targetX = clamp(targetX, boundsLeft - overshootLimit, boundsRight + overshootLimit);
+    drag.targetY = clamp(targetY, boundsTop - overshootLimit, boundsBottom + overshootLimit);
 
     drag.lastPointerX = worldX;
     drag.lastPointerY = worldY;
@@ -1631,7 +1720,7 @@ function extractSizeInfo(raw) {
     safeNumber(raw.unit_volume_ml),
     safeNumber(raw.unitVolumeMl),
     safeNumber(raw.volume_in_milliliters)
-  ];
+  ].filter((value) => Number.isFinite(value) && value > 0);
 
   let unitVolumeMl = null;
   if (labelInfo && Number.isFinite(labelInfo.unitVolumeMl)) {
@@ -1640,8 +1729,19 @@ function extractSizeInfo(raw) {
 
   if (!Number.isFinite(unitVolumeMl)) {
     for (const candidate of unitVolumeCandidates) {
-      if (candidate > 0) {
-        unitVolumeMl = candidate;
+      const normalized = normalizeUnitVolumeMl(candidate, packCount, labelInfo);
+      if (Number.isFinite(normalized) && normalized > 0) {
+        unitVolumeMl = normalized;
+        break;
+      }
+    }
+  }
+
+  if (!Number.isFinite(unitVolumeMl)) {
+    for (const candidate of unitVolumeCandidates) {
+      const normalized = normalizeLooseVolumeMl(candidate, packCount);
+      if (Number.isFinite(normalized) && normalized > 0) {
+        unitVolumeMl = normalized;
         break;
       }
     }
