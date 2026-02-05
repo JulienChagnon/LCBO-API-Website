@@ -1,5 +1,6 @@
 const http = require('http');
 const https = require('https');
+const zlib = require('zlib');
 
 const LCBO_GRAPHQL_ENDPOINT = process.env.LCBO_GRAPHQL_ENDPOINT || 'https://api.lcbo.dev/graphql';
 const STORE_RADIUS_KM = Number(process.env.LCBO_STORE_RADIUS_KM || '10');
@@ -175,6 +176,10 @@ function requestText(url, options = {}) {
       Accept: 'application/json',
       ...(options.headers || {})
     };
+    // Avoid compressed responses unless we explicitly handle them.
+    if (!headers['Accept-Encoding'] && !headers['accept-encoding']) {
+      headers['Accept-Encoding'] = 'identity';
+    }
     if (body) {
       headers['Content-Type'] = headers['Content-Type'] || 'application/json';
       headers['Content-Length'] = Buffer.byteLength(body);
@@ -191,13 +196,43 @@ function requestText(url, options = {}) {
         headers
       },
       (res) => {
-        let data = '';
-        res.setEncoding('utf8');
+        const chunks = [];
         res.on('data', (chunk) => {
-          data += chunk;
+          chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
         });
         res.on('end', () => {
-          resolve({ statusCode: res.statusCode || 0, headers: res.headers || {}, body: data });
+          const statusCode = res.statusCode || 0;
+          const responseHeaders = res.headers || {};
+          const encoding = String(responseHeaders['content-encoding'] || '').toLowerCase();
+          const buffer = Buffer.concat(chunks);
+
+          const finish = (finalBuffer) => {
+            resolve({
+              statusCode,
+              headers: responseHeaders,
+              body: finalBuffer ? finalBuffer.toString('utf8') : ''
+            });
+          };
+
+          if (!buffer.length) {
+            finish(Buffer.alloc(0));
+            return;
+          }
+
+          if (encoding === 'gzip') {
+            zlib.gunzip(buffer, (err, out) => (err ? finish(buffer) : finish(out)));
+            return;
+          }
+          if (encoding === 'deflate') {
+            zlib.inflate(buffer, (err, out) => (err ? finish(buffer) : finish(out)));
+            return;
+          }
+          if (encoding === 'br' && typeof zlib.brotliDecompress === 'function') {
+            zlib.brotliDecompress(buffer, (err, out) => (err ? finish(buffer) : finish(out)));
+            return;
+          }
+
+          finish(buffer);
         });
       }
     );
@@ -249,12 +284,12 @@ async function gqlRequest(query, variables) {
 function extractPostalCandidates(value) {
   const rawInput = String(value || '').toUpperCase().trim();
   if (!rawInput) return [];
-  const embeddedMatch = rawInput.match(/[A-Z]\\d[A-Z]\\s?\\d[A-Z]\\d/);
+  const embeddedMatch = rawInput.match(/[A-Z]\d[A-Z]\s?\d[A-Z]\d/);
   const extracted = embeddedMatch ? embeddedMatch[0] : rawInput;
   const normalized = extracted.replace(/[^A-Z0-9]/g, '').trim();
   if (!normalized) return [];
   const candidates = [];
-  if (normalized.length >= 3 && /^[A-Z]\\d[A-Z]/.test(normalized.slice(0, 3))) {
+  if (normalized.length >= 3 && /^[A-Z]\d[A-Z]/.test(normalized.slice(0, 3))) {
     candidates.push(normalized.slice(0, 3));
   }
   if (!candidates.includes(extracted)) candidates.push(extracted);
@@ -265,7 +300,7 @@ async function geocodePostal(postalOrAddress) {
   const candidates = extractPostalCandidates(postalOrAddress);
   if (!candidates.length) return null;
 
-  const fsa = candidates.find((candidate) => /^[A-Z]\\d[A-Z]$/.test(candidate.replace(/\\s+/g, '')));
+  const fsa = candidates.find((candidate) => /^[A-Z]\d[A-Z]$/.test(candidate.replace(/\s+/g, '')));
   if (fsa) {
     const token = encodeURIComponent(fsa.trim().toLowerCase());
     const data = await safeJson(`https://api.zippopotam.us/ca/${token}`);
@@ -308,8 +343,8 @@ async function geocodePostal(postalOrAddress) {
 
 function resolveSubPath(event) {
   const path = String(event.path || '/');
-  const withoutFn = path.replace(/^\\/\\.netlify\\/functions\\/api/, '');
-  const withoutApi = withoutFn.replace(/^\\/api/, '');
+  const withoutFn = path.replace(/^\/\.netlify\/functions\/api/, '');
+  const withoutApi = withoutFn.replace(/^\/api/, '');
   const normalized = withoutApi || '/';
   return normalized.startsWith('/') ? normalized : `/${normalized}`;
 }
@@ -329,7 +364,12 @@ exports.handler = async (event) => {
 
   try {
     if (pathname === '/health') {
-      return jsonResponse(event, 200, { ok: true, mode: 'netlify' });
+      const wantsUpstream = String(qs.upstream || '') === '1';
+      if (wantsUpstream) {
+        const data = await gqlRequest('query Ping { __typename }', {});
+        return jsonResponse(event, 200, { ok: true, mode: 'netlify', upstream: true, data });
+      }
+      return jsonResponse(event, 200, { ok: true, mode: 'netlify', upstream: false });
     }
 
     if (pathname === '/products') {
@@ -418,7 +458,7 @@ exports.handler = async (event) => {
       return jsonResponse(event, 200, { result: stores });
     }
 
-    const m = pathname.match(/^\\/stores\\/([^/]+)\\/products$/);
+    const m = pathname.match(/^\/stores\/([^/]+)\/products$/);
     if (m) {
       const storeId = decodeURIComponent(m[1]);
       const term = String(qs.q || '').trim().toLowerCase();
